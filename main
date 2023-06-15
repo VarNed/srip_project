@@ -1,0 +1,115 @@
+import numpy as np
+from scipy.stats import chi2_contingency
+import matplotlib.pyplot as plt
+
+def take_t(k): # определение критерия Стьюдента
+    if k <= 30:
+        return u__[k]
+    else:
+        if k < 35:
+            return u__[30]
+        elif k == 35:
+            return (u__[30] + u__[40]) / 2
+        elif k <= 45:
+            return u__[40]
+        else:
+            print('No')
+            return 2
+
+def filt_it(j):
+    if co_step == 'a':
+        if j < step:
+            return 1
+        else:
+            return 0
+    elif step == 'a':
+        if co_step <= j:
+            return 1
+        else:
+            return 0
+    elif co_step <= j < step:
+        return 1
+    else:
+        return 0
+
+# ввод
+print('Введите первую выборку')
+x = [float(p) for p in input().split()]
+a = sorted(x)
+n1 = len(a)
+u1 = sum(a)/n1
+s_21 = 1 / (n1 - 1) *(sum([(i - u1)**2 for i in a]))
+print('Введите вторую выборку')
+y = [float(p) for p in input().split()]
+b = sorted(y)
+n2 = len(b)
+u2 = sum(b)/n2
+s_22 = 1 / (n2 - 1) *(sum([(i - u2)**2 for i in b]))
+# обработка
+print('1. Первичная обработка результатов измерений')
+print(f'Среднее значение выборки x1: {u1}, x2: {u2}')
+print(f'Дисперсия s_2_1: {s_21}, s_2_2: {s_22}')
+print(f'Среднеквадратическое отклонение s_1: {s_21 ** 0.5}, s_2: {s_22 ** 0.5}')
+u__ = {1:12.708, 2:4.303, 3:3.182, 4:2.776, 5:2.571, 6:2.447, 7:2.365, 8:2.306, 9:2.262, 10: 2.228, 11: 2.201, 12:2.179, 13:2.160, 14:2.145, 15:2.131, 16:2.12, 17:2.11, 18:2.101, 19:2.093, 20:2.086, 21:2.080, 22:2.074, 23:2.069, 24:2.064, 25:2.06, 26:2.056, 27:2.052, 28:2.048, 29:2.045, 30:2.042, 40:2.021, 60:2}
+print('2. Построение доверительных интервалов')
+e1 = take_t(n1 - 1)*((s_21/n1) ** 0.5)
+e2 = take_t(n2 - 1)*((s_22/n2) ** 0.5)
+print('Mатематическое ожидание: a1 +- e1: ', u1, '+-', e1, '; a2 +- e2: ', u2, '+-', e2)
+print('3. Проверка гипотез о равенстве мат ожиданий и дисперсий')
+print('F =', max(s_22/s_21, s_21/s_22))
+# *сравнение с табличным F и вывод про мат ожидания*
+s_n = ((s_22 * (n2 - 1) + s_21 * (n1 - 1)) / (n1 + n2 - 2)) ** 0.5
+print('t =', (u1 - u2) / s_n / ((1/n1 + 1/n2)** 0.5))
+# *сравнение с табличным t и вывод про дисперсии*
+x_n = (n1*u1 + n2*u2)/(n1 + n2)
+print('Сводные среднее значение и среднеквадратическое отклонение: Xn =', x_n, 'Sn = ', s_n)
+
+# визуализация
+plt.plot(range(1, len(x) + 1), [u1] * len(x), '-')
+plt.plot(range(1, len(x) + 1), x, color='blue', marker='o', markersize=7)
+plt.xlabel('Номер эксперимента') #Подпись для оси х
+plt.ylabel('Значение') #Подпись для оси y
+plt.title('Первый график') #Название
+plt.show()
+
+plt.plot(range(1, len(y) + 1), y, color='orange', marker='o', markersize=7)
+plt.plot(range(1, len(y) + 1), [u2] * len(y), color='red')
+plt.xlabel('Номер эксперимента') #Подпись для оси х
+plt.ylabel('Значение') #Подпись для оси y
+plt.title('Второй график') #Название
+plt.show()
+
+min_s = min(len(x), len(y))
+plt.scatter(x[:min_s], y[:min_s])
+plt.title("Диаграмма рассеяния")
+plt.show()
+
+plt.plot(range(1, len(y) + len(x) + 1), x + y, color='g', marker='o', markersize=7)
+plt.plot(range(1, len(y) + len(x) + 1), [x_n] * (len(y) + len(x)), color='gray')
+plt.xlabel('Номер эксперимента') #Подпись для оси х
+plt.ylabel('Значение') #Подпись для оси y
+plt.title('Совмещенный график') #Название
+plt.show()
+
+obs = np.array([x[:min_s], y[:min_s]])
+res = chi2_contingency(obs)
+print(f"Хи квадрат: {res.statistic}")
+
+sv = sorted(x + y)
+min_zn = min(sv)
+max_zn = max(sv)
+l = 7
+step_i = (max_zn - min_zn) / l
+sv_x = []
+sv_y = []
+for i in range(l):
+    co_step = min_zn + i * step_i
+    step = min_zn + (i + 1) * step_i
+    sv_x.append(min_zn + i * step_i)
+    sv_y.append(len(list(filter(filt_it, sv))))
+index = np.arange(7)
+plt.title('Гистограмма распределения')
+plt.bar(sv_x, sv_y, error_kw={'ecolor':'0.1','capsize':6})
+plt.show()
+
+
